@@ -1,16 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 #define Max_Dice 5
 #define Num_Player 2
+#define seed 24
 
-//----Function Prototypes----
-void Create_players (player* p);
-void Display_players (player* p);
-void roll_dice (player* p);
-
-//----player Struct for player specific information----
+//----Struct for player specific information (dice values and number of dice)----
 
 typedef struct player
 {
@@ -18,6 +15,13 @@ typedef struct player
     int dice_num;               // number of dice
 
 }player;
+
+//----Function Prototypes----
+void Create_players (player* p);
+void Display_player (player* p);
+void roll_dice (player* p);
+
+//---------------------------
 
 //----Initialize a player - Iterate through loop to set all players in game----
 
@@ -30,9 +34,9 @@ void Create_players (player* player)  {
 
 }
 
-//----Display player information----
+//----Display player information (dice values and number of dice)----
 
-void Display_players (player* player) {
+void Display_player (player* player) {
     
     printf("Dice num: %d\n  Dice values: ", player->dice_num);       //Print Number of player dice
     for (int i = 0; i < player->dice_num; i++){
@@ -42,7 +46,7 @@ void Display_players (player* player) {
 
 }
 
-//----Roll player dice----
+//----Roll player dice from 1-6----
 
 void roll_dice (player* player) {
     
@@ -55,12 +59,44 @@ void roll_dice (player* player) {
 int main ()
 {
 
-    //Player information and initialization
+    //Seed the rand so that each run is random
+    srand(seed);
+    // srand(time(0));
+
+    //Player initialization
     player players [Num_Player];
     for (int i = 0; i < Num_Player; i++){
         Create_players(&players[i]);
     }
 
+    int round = 1;
+    int bid [1];  // the bid for each round made by the last player - {quantity, face value}
+    while (1){                  
+        
+        //Round setup
+        printf("Round: %d\n", round);
+
+        for (int i = 0; i < Num_Player; i++){
+            roll_dice(&players[i]);               //Roll every player's dice
+        }
+
+        memset(bid, 0, sizeof(bid));                  //Clear the bid array
+        
+
+        //Round play
+        for (int i = 0; i < Num_Player; i++){
+
+            printf("Player %d's turn\n ", i+1);
+            Display_player(&players[i]);
+
+
+            // printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): ");
+            // scanf("%d %d", &bid[0], &bid[1]);
+            // printf("\n");
+        }
+
+        break;
+    }
     
     
 
