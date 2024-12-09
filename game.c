@@ -71,11 +71,10 @@ int main ()
 
     int round = 1;
     int bid [1];  // the bid for each round made by the last player - {quantity, face value}
-    while (1){                  
-        
-        //Round setup
-        printf("Round: %d\n", round);
 
+    while (1){                  //A new Round starts 
+    
+        printf("Round: %d\n", round);
         for (int i = 0; i < Num_Player; i++){
             roll_dice(&players[i]);               //Roll every player's dice
         }
@@ -83,19 +82,22 @@ int main ()
         memset(bid, 0, sizeof(bid));                  //Clear the bid array
         
 
-        //Round play
-        for (int i = 0; i < Num_Player; i++){
+        while (1){          //Player taking their turns
 
-            printf("Player %d's turn\n ", i+1);
-            Display_player(&players[i]);
+            for (int i = 0; i < Num_Player; i++){
 
+                printf("Player %d's turn\n : ", i + 1);
+                Display_player(&players[i]);
 
-            // printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): ");
-            // scanf("%d %d", &bid[0], &bid[1]);
-            // printf("\n");
+                if (bid[1] == 0){           //If no one has made a bid yet
+                
+                    printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): ");
+                    scanf("%d %d", &bid[0], &bid[1]);
+                } 
+            }
+
         }
 
-        break;
     }
     
     
