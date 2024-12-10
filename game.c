@@ -17,15 +17,15 @@ typedef struct player
 }player;
 
 //----Function Prototypes----
-void Create_players (player* p);
-void Display_player (player* p);
+void create_players (player* p);
+void display_player (player* p);
 void roll_dice (player* p);
-
+void action_bid (int* bid);
 //---------------------------
 
 //----Initialize a player - Iterate through loop to set all players in game----
 
-void Create_players (player* player)  {
+void create_players (player* player)  {
 
     player->dice_num = Max_Dice;         //Set player dice number to max dice
     for (int i = 0; i < Max_Dice; i++){
@@ -36,7 +36,7 @@ void Create_players (player* player)  {
 
 //----Display player information (dice values and number of dice)----
 
-void Display_player (player* player) {
+void display_player (player* player) {
     
     printf("Dice num: %d\n  Dice values: ", player->dice_num);       //Print Number of player dice
     for (int i = 0; i < player->dice_num; i++){
@@ -56,6 +56,29 @@ void roll_dice (player* player) {
 
 }
 
+void action_bid (int* bid) {
+    while (1){
+
+        int new_face = 0;
+        int new_quantity = 0;
+
+        printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): \n");
+        scanf("%d %d", &new_quantity, &new_face);
+
+
+        if (new_quantity < bid[0] && new_face < bid[1]){                //Check If the new bid is valid
+
+            printf("Invalid bid. Please try again.\n");
+            continue;
+        }
+
+        bid[0] = new_quantity;          //Update the bid array
+        bid[1] = new_face;
+        printf("New bid: %d %d\n", bid[0], bid[1]);
+        break;
+    }
+}
+
 int main ()
 {
 
@@ -66,7 +89,7 @@ int main ()
     //Player initialization
     player players [Num_Player];
     for (int i = 0; i < Num_Player; i++){
-        Create_players(&players[i]);
+        create_players(&players[i]);
     }
 
     int round = 1;
@@ -87,13 +110,11 @@ int main ()
             for (int i = 0; i < Num_Player; i++){           //Iterate through players
 
                 printf("Player %d's turn: \n", i + 1);
-                Display_player(&players[i]);
+                display_player(&players[i]);
 
                 if (bid[1] == 0){           //If this is the first bid only action is to bid
                 
-                    printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): \n");
-                    scanf("%d %d", &bid[0], &bid[1]);
-
+                    action_bid(bid);
                 }
             }
 
