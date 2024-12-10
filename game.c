@@ -70,9 +70,9 @@ int main ()
     }
 
     int round = 1;
-    int bid [1];  // the bid for each round made by the last player - {quantity, face value}
+    int bid [2];  // the bid for each round made by the last player - {quantity, face value}
 
-    while (1){                  //A new Round starts 
+    while (1){          //Preround Loop
     
         printf("Round: %d\n", round);
         for (int i = 0; i < Num_Player; i++){
@@ -82,22 +82,27 @@ int main ()
         memset(bid, 0, sizeof(bid));                  //Clear the bid array
         
 
-        while (1){          //Player taking their turns
+        while (1){          //Round Loop
 
-            for (int i = 0; i < Num_Player; i++){
+            for (int i = 0; i < Num_Player; i++){           //Iterate through players
 
-                printf("Player %d's turn\n : ", i + 1);
+                printf("Player %d's turn: \n", i + 1);
                 Display_player(&players[i]);
 
-                if (bid[1] == 0){           //If no one has made a bid yet
+                if (bid[1] == 0){           //If this is the first bid only action is to bid
                 
-                    printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): ");
+                    printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): \n");
                     scanf("%d %d", &bid[0], &bid[1]);
-                } 
+
+                }
             }
 
+
+
+            break;
         }
 
+        break;
     }
     
     
