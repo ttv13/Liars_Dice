@@ -69,6 +69,8 @@ void action_bid (int* bid) {
 
         if ((new_quantity < bid[0] && new_face < bid[1]) || (new_face > 6 || new_face < 1)){                //Check If the new bid is valid (if the new bid is smaller than old bid and if the new face is less than 6 or 1)
 
+
+            printf("last bid was %d %d", bid[0], bid[1]);
             printf("Invalid bid. Please try again.\n");
             continue;
         }
@@ -83,7 +85,7 @@ void action_bid (int* bid) {
 void tally_dice (int* bid, player* players, int caller, int action) {             //Tally dice for spot on and call bluff (action = 0 for spot on and 1 for call bluff)
 
     int tally = 0;
-    int rightorwrong = 0;
+
 
     for (int i = 0; i < Num_Player; i++){           // iterate through all of the players and cound number of a specific face value
 
@@ -98,21 +100,51 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
         
     }
 
-    if (action == 0 && tally == bid[0] || (action == 1 && tally != bid[0])){           //Spot on or bluff being right or wrong
+    if (action == 0){               //if action was spot on 
 
-        printf("Player %d was Right!\n", caller + 1);
-        rightorwrong = 1;
-    } else {
+        if(tally == bid[0]){        //If caller was right
 
-        printf("Player %d was wrong!\n", caller + 1);
-        rightorwrong = 0;
-    }
+            printf("Player %d was spot on ! Everyone else loses a dice ! \n", caller + 1);
 
-    for (int x = 0; x < Num_Player; x++){          //Iterate through all players and remove dice for losing players
+            for(int i = 0; i < Num_Player; i++){            //Iterate through all of the players to discard dice except for caller
 
-        if (x == caller && rightorwrong == 1){          //If the player won, do not remove dice
-            continue;
-        } 
+                if(i == caller){
+                    continue;
+                }
+                players[i].dice_num = players[i].dice_num - 1;
+                printf("Player %d is now at %d dice\n ", i + 1, players[i].dice_num);
+
+            }
+        }else {                 //Caller is wrong
+            printf("Player %d was wrong! The bid was not spot on\n ", caller + 1);
+            players[caller].dice_num = players[caller].dice_num - 1;            //Discard wrong caller dice
+            printf("Player %d is now at %d dice\n ", caller + 1, players[caller].dice_num);
+
+        }
+
+
+    } else {                    // if action was call bluff 
+
+        if(tally < bid[0]){        //if caller was right
+
+            printf("Player %d was right ! Everyone else was bluffing !\n ", caller + 1);
+
+            for (int i = 0; i < Num_Player; i++){           //Iterate through all of the players to discard dice except for caller
+                if (i == caller)
+                {
+                    continue;
+                }
+                players[i].dice_num = players[i].dice_num - 1;
+                printf("Player %d is now at %d dice \n", i + 1, players[i].dice_num);
+
+
+            }
+        } else {        //if caller was wrong
+            printf("Player %d was wrong! The bid was not a bluff! \n", caller + 1);
+            players[caller].dice_num = players[caller].dice_num - 1;            //Discard wrong caller dice
+            printf("Player %d is now at %d dice \n", caller + 1, players[caller].dice_num);
+
+        }
 
     }
 }
@@ -134,8 +166,21 @@ int main ()
     int round = 1;
     int bid [2];  // the bid for each round made by the last player - {quantity, face value}
     int action = 0;
+    int end_game_flag = 0;
     while (1){          //Preround Loop
     
+        for(int i = 0; i < Num_Player; i++){
+            if(players[i].dice_num == 0){
+                printf("player %d has ran out of dice ! They lose! \n", i+1);
+                end_game_flag = 1;
+            }
+        }
+
+        if(end_game_flag){
+            break;
+        }
+
+
         printf("Round: %d\n", round);
         for (int i = 0; i < Num_Player; i++){
             roll_dice(&players[i]);               //Roll every player's dice
@@ -187,10 +232,8 @@ int main ()
                 }
             }
 
-            break;
         }
 
-        break;
     }
     
     
