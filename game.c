@@ -21,6 +21,7 @@ void create_players (player* p);
 void display_player (player* p);
 void roll_dice (player* p);
 void action_bid (int* bid);
+void tally_dice (int* bid, player* players, int caller, int action);
 //---------------------------
 
 //----Initialize a player - Iterate through loop to set all players in game----
@@ -66,7 +67,7 @@ void action_bid (int* bid) {
         scanf("%d %d", &new_quantity, &new_face);
 
 
-        if (new_quantity < bid[0] && new_face < bid[1]){                //Check If the new bid is valid
+        if ((new_quantity < bid[0] && new_face < bid[1]) || (new_face > 6 || new_face < 1)){                //Check If the new bid is valid (if the new bid is smaller than old bid and if the new face is less than 6 or 1)
 
             printf("Invalid bid. Please try again.\n");
             continue;
@@ -78,6 +79,44 @@ void action_bid (int* bid) {
         break;
     }
 }
+
+void tally_dice (int* bid, player* players, int caller, int action) {             //Tally dice for spot on and call bluff (action = 0 for spot on and 1 for call bluff)
+
+    int tally = 0;
+    int rightorwrong = 0;
+
+    for (int i = 0; i < Num_Player; i++){           // iterate through all of the players and cound number of a specific face value
+
+        for (int j = 0; j < players[i].dice_num; j++){
+            
+            if (players[i].dice[j] == bid[1]){
+
+                tally++;
+
+            }
+        }
+        
+    }
+
+    if (action == 0 && tally == bid[0] || (action == 1 && tally != bid[0])){           //Spot on or bluff being right or wrong
+
+        printf("Player %d was Right!\n", caller + 1);
+        rightorwrong = 1;
+    } else {
+
+        printf("Player %d was wrong!\n", caller + 1);
+        rightorwrong = 0;
+    }
+
+    for (int x = 0; x < Num_Player; x++){          //Iterate through all players and remove dice for losing players
+
+        if (x == caller && rightorwrong == 1){          //If the player won, do not remove dice
+            continue;
+        } 
+
+    }
+}
+
 
 int main ()
 {
@@ -94,7 +133,7 @@ int main ()
 
     int round = 1;
     int bid [2];  // the bid for each round made by the last player - {quantity, face value}
-
+    int action = 0;
     while (1){          //Preround Loop
     
         printf("Round: %d\n", round);
@@ -115,10 +154,38 @@ int main ()
                 if (bid[1] == 0){           //If this is the first bid only action is to bid
                 
                     action_bid(bid);
+                } else {
+
+                    // Action Selection
+                    while (1)
+                    {
+
+                        printf("Actions : New bid | Spot On | Call Bluff - 1 , 2 ,3 \n");
+                        scanf("%d", &action);
+
+                        switch (action)
+                        {
+
+                        case 1:
+                            action_bid(bid);
+                            break;
+
+                        case 2:
+                            tally_dice(bid, players, i, 0);
+                            break;
+
+                        case 3:
+                            tally_dice(bid, players, i, 1);
+                            break;
+                        default:
+                            printf("Invalid action. Please try again.\n");
+                            continue;
+                        }
+
+                        break; // Break out of action selection once an action is selected
+                    }
                 }
             }
-
-
 
             break;
         }
