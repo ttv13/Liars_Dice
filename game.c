@@ -66,18 +66,17 @@ void action_bid (int* bid) {
         printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): \n");
         scanf("%d %d", &new_quantity, &new_face);
 
+        if ((new_quantity <= bid[0] && new_face <= bid[1]) || (new_face > 6 || new_face < 1)){                //Check If the new bid is valid (if the new bid is smaller than old bid and if the new face is less than 6 or 1)
 
-        if ((new_quantity < bid[0] && new_face < bid[1]) || (new_face > 6 || new_face < 1)){                //Check If the new bid is valid (if the new bid is smaller than old bid and if the new face is less than 6 or 1)
 
-
-            printf("last bid was %d %d", bid[0], bid[1]);
+            printf("last bid was %d %d\n ", bid[0], bid[1]);
             printf("Invalid bid. Please try again.\n");
             continue;
         }
 
         bid[0] = new_quantity;          //Update the bid array
         bid[1] = new_face;
-        printf("New bid: %d %d\n", bid[0], bid[1]);
+        printf("\n\n\nNew bid: %d %d\n", bid[0], bid[1]);
         break;
     }
 }
@@ -167,6 +166,7 @@ int main ()
     int bid [2];  // the bid for each round made by the last player - {quantity, face value}
     int action = 0;
     int end_game_flag = 0;
+    int end_round_flag = 0;
     while (1){          //Preround Loop
     
         for(int i = 0; i < Num_Player; i++){
@@ -181,7 +181,7 @@ int main ()
         }
 
 
-        printf("Round: %d\n", round);
+        printf("\n\n\nRound: %d\n", round);
         for (int i = 0; i < Num_Player; i++){
             roll_dice(&players[i]);               //Roll every player's dice
         }
@@ -217,10 +217,12 @@ int main ()
 
                         case 2:
                             tally_dice(bid, players, i, 0);
+                            end_round_flag = 1;
                             break;
 
                         case 3:
                             tally_dice(bid, players, i, 1);
+                            end_round_flag = 1;
                             break;
                         default:
                             printf("Invalid action. Please try again.\n");
@@ -230,6 +232,17 @@ int main ()
                         break; // Break out of action selection once an action is selected
                     }
                 }
+
+                if (end_round_flag){
+                    break;
+                }
+
+            }
+
+            if (end_round_flag){
+                round++;
+                end_round_flag = 0;
+                break;
             }
 
         }
