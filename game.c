@@ -167,6 +167,7 @@ int main ()
     int action = 0;
     int end_game_flag = 0;
     int end_round_flag = 0;
+    int start;
     while (1){          //Preround Loop
     
         for(int i = 0; i < Num_Player; i++){
@@ -181,7 +182,7 @@ int main ()
         }
 
 
-        printf("\n\n\nRound: %d\n", round);
+        printf("Round: %d\n", round);
         for (int i = 0; i < Num_Player; i++){
             roll_dice(&players[i]);               //Roll every player's dice
         }
@@ -193,7 +194,15 @@ int main ()
 
             for (int i = 0; i < Num_Player; i++){           //Iterate through players
 
-                printf("Player %d's turn: \n", i + 1);
+                while(1){//start turn loop
+                    printf("Player %d's turn: \n", i + 1);
+                    printf("ready to start turn ? : press one to start \n");
+                    scanf("%d", &start);
+                    if (start == 1){
+                        break;
+                    }
+                }
+
                 display_player(&players[i]);
 
                 if (bid[1] == 0){           //If this is the first bid only action is to bid
@@ -230,14 +239,14 @@ int main ()
                         }
 
                         break; // Break out of action selection once an action is selected
-                    }
+                    }//action selection while
                 }
 
                 if (end_round_flag){
                     break;
                 }
 
-            }
+            }//for player loop
 
             if (end_round_flag){
                 round++;
@@ -245,11 +254,11 @@ int main ()
                 break;
             }
 
-        }
+        }//round loop
 
-    }
+    }//preround loop
     
     
 
     return 0;
-}
+}//end main 
