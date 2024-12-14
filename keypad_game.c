@@ -77,54 +77,63 @@ void roll_dice (player* player) {
 }
 
 void action_bid (int* bid) {
+
+    xil_printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): \n");
+    int new_face = 0;
+    int new_quantity = 0;
+
+    int key_num = 0;
+    u16 keystate;
+    XStatus status;
+    u8 key, last_key = 'x';
+    XTime time;
+    XTime key_time = 0;
+    u64 between_key_time = 0;
+    
     while (1){
 
-        int new_face = 0;
-        int new_quantity = 0;
-        int key_num = 0;
-        xil_printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): \n");
-        
-        //Get the quanity and face value
-        while (1){
-            u16 keystate;
-            u8 key, last_key = 'x';
-            XStatus status, last_status = KYPD_NO_KEY;
+        keystate = KYPD_getKeyStates(&kypd);
+        status = KYPD_getKeyPressed(&kypd, keystate, &key);
 
+        if (status == KYPD_SINGLE_KEY) { 
+            
+            XTime_GetTime(&time);
+            between_key_time = ((time - key_time) / (COUNTS_PER_SECOND / 1000));
 
-            keystate = KYPD_getKeyStates(&kypd);
-            status = KYPD_getKeyPressed(&kypd, keystate, &key);
+            if((key != last_key || between_key_time > Debounce_Time) && key_num == 0){
 
-            if (status == KYPD_SINGLE_KEY && (status != last_status || key != last_key)){   //ensure a valid key was pressed
+                xil_printf("You pressed : %c\r\n ", key);
                 new_quantity = key - '0';   //Convert the character to an integer
-                if(key_num == 0){
-                    xil_printf("You entered quantity: %d\n", new_quantity);
-                    key_num++;
-                    last_key = key;
-                }else if(key_num == 1){
-                    xil_printf("You entered face value: %d\n", new_face);
-                    break;
-                }
-            }else if (status == KYPD_MULTI_KEY && status != last_status){
-                xil_printf("Error: Multiple keys pressed\n");
+                last_key = key;
+                key_time = time;
+                key_num++;
+
+            } else if (key != last_key || between_key_time > Debounce_Time && key_num == 1) {
+
+                xil_printf("You pressed : %c\r\n ", key);
+                new_face = key - '0';   //Convert the character to an integer
+                last_key = key;
+                key_time = time;
             }
-
-            last_status = status;
-            usleep(1000);
-
         }
+
         if ((new_quantity <= bid[0] && new_face <= bid[1]) || (new_face > 6 || new_face < 1)){                //Check If the new bid is valid (if the new bid is smaller than old bid and if the new face is less than 6 or 1)
 
 
-            xil_printf("last bid was %d %d\n ", bid[0], bid[1]);
-            xil_printf("Invalid bid. Please try again.\n");
-            continue;
+            xil_printf("last bid was %d %d\r\n ", bid[0], bid[1]);
+            xil_printf("Invalid bid. Please try again.\r\n");
+            new_face = 0;
+            new_quantity = 0;
+        }else {
+            break;
         }
-
-        bid[0] = new_quantity;          //Update the bid array
-        bid[1] = new_face;
-        xil_printf("\n\n\nNew bid: %d %d\n", bid[0], bid[1]);
-        break;
+        usleep(1000);
     }
+
+    bid[0] = new_quantity; // Update the bid array
+    bid[1] = new_face;
+    xil_printf("\n\n\nNew bid: %d %d\n", bid[0], bid[1]);
+    break;
 }
 
 void tally_dice (int* bid, player* players, int caller, int action) {             //Tally dice for spot on and call bluff (action = 0 for spot on and 1 for call bluff)
@@ -218,10 +227,11 @@ int main ()
     int start;
 
     u16 keystate;
-    XStatus status, last_status = KYPD_NO_KEY;
+    XStatus status;
     u8 key, last_key = 'x';
-    XTime start_time, end_time;
-    XTime last_time = 0;
+    XTime time;
+    XTime key_time = 0;
+    u64 between_key_time = 0;
 
     while (1){          //Preround Loop
     
@@ -249,24 +259,34 @@ int main ()
 
             for (int i = 0; i < Num_Player; i++){           //Iterate through players
 
-                while(1){//start turn loop
-                    xil_printf("Player %d's turn: Ready to start turn? Press 1 to start.\r\n", i + 1);
+                xil_printf("Player %d's turn: Ready to start turn? Press 1 to start. \r\n", i + 1);
+
+                while(1){           //start turn loop
 
                     keystate = KYPD_getKeyStates(&kypd);
                     status = KYPD_getKeyPressed(&kypd, keystate, &key);
-                    if (status == KYPD_SINGLE_KEY && (status != last_status || key != last_key) && (key == '1')){
+ 
+                    if(status == KYPD_SINGLE_KEY){
+                        XTime_GetTime(&time);
+                        between_key_time = ((time - key_time) / (COUNTS_PER_SECOND / 1000));
 
-                        xil_printf("Key Pressed: %c\r\n", key);
-                        last_key = key;
-                        break;
-                    }else if(status == KYPD_MULTI_KEY && status != last_status){
+                        if((key != last_key || between_key_time > DEBOUNCE_DELAY) && key == '1'){
+
+                            xil_printf("Key Pressed: %c\r\n", key);
+                            last_key = key;
+                            key_time = time;
+                            break;
+                            
+                        }
+                    } else if(status == KYPD_MULTI_KEY){
                         xil_printf("Error: Multiple keys pressed\r\n ");
                     }
-                    last_status = status;
+
                     usleep(1000);
                 }
 
-                display_player(&players[i]);
+
+                display_player(&players[i]);        //should also display bid
 
                 if (bid[1] == 0){           //If this is the first bid only action is to bid
                 
@@ -279,38 +299,51 @@ int main ()
 
                         xil_printf("Actions : New bid | Spot On | Call Bluff - 1 , 2 ,3 \n");
 
-                        keystate = KYPD_getKeyStates(&kypd);
-                        status = KYPD_getKeyPressed(&kypd, keystate, &key);
-                        if (status == KYPD_SINGLE_KEY && (status != last_status || key != last_key) && (key >= '1' && key <= '3')) {
-                            action = key - '0';
-                            last_key = key;
-                        }else if(status == KYPD_MULTI_KEY && status != last_status){
-                            xil_printf("Error: Multiple keys pressed\r\n ");
-                            last_status = status;
-                            usleep(1000);
-                            continue;
-                        }
-                        last_status = status;
-                        usleep(1000);
-                        switch (action)
-                        {
 
-                        case 1:
-                            action_bid(bid);
-                            break;
+                        while (1){          //keypad input loop
+                        
+                            keystate = KYPD_getKeyStates(&kypd);
+                            status = KYPD_getKeyPressed(&kypd, keystate, &key);
+                        
+                            if(status == KYPD_SINGLE_KEY){
+                                XTime_GetTime(&time);
+                                between_key_time = ((time - key_time) / (COUNTS_PER_SECOND / 1000));
 
-                        case 2:
-                            tally_dice(bid, players, i, 0);
-                            end_round_flag = 1;
-                            break;
+                                if((key != last_key || between_key_time > DEBOUNCE_DELAY)){
 
-                        case 3:
-                            tally_dice(bid, players, i, 1);
-                            end_round_flag = 1;
-                            break;
-                        default:
-                            xil_printf("Invalid action. Please try again.\n");
-                            continue;
+                                    xil_printf("Key Pressed: %c\r\n", key);
+                                    last_key = key;
+                                    key_time = time;
+
+                                    action = key - '0';
+
+                                    switch (action)
+                                    {
+
+                                    case 1:
+                                        action_bid(bid);
+                                        break;
+
+                                    case 2:
+                                        tally_dice(bid, players, i, 0);
+                                        end_round_flag = 1;
+                                        usleep(1000);
+                                        break;
+
+                                    case 3:
+                                        tally_dice(bid, players, i, 1);
+                                        end_round_flag = 1;
+                                        usleep(1000);
+                                        break;
+                                    default:
+                                        xil_printf("Invalid action. Please try again.\n");
+                                        usleep(1000);
+                                        continue;
+                                    }
+                                }
+                            }
+
+                            break;      //breaks if action is selected
                         }
 
                         break; // Break out of action selection once an action is selected
