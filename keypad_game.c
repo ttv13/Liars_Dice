@@ -5,7 +5,6 @@
 
 #include "PmodKYPD.h"
 #include "sleep.h"
-#include "xil_cache.h"
 #include "xparameters.h"
 
 
@@ -15,6 +14,8 @@
 
 PmodKYPD kypd;
 #define DEFAULT_KEYTABLE "0FED789C456B123A"
+#define u64 DEBOUNCE_TIME = 300000;
+
 
 void kypdIni() {
 

@@ -5,18 +5,34 @@
 
 #include "PmodKYPD.h"
 #include "sleep.h"
-#include "xil_cache.h"
 #include "xparameters.h"
 
 
 #include "xil_types.h"
-#include "xil_printf.h"
 #include "PmodOLED.h"
 
 
 #define Max_Dice 5
 #define Num_Player 2
 #define seed 24
+
+PmodKYPD kypd;
+
+PmodOLED oled;
+
+#define DEFAULT_KEYTABLE "0FED789C456B123A"
+
+void kypdIni() {
+
+    KYPD_begin(&kypd, XPAR_PMODKYPD_0_AXI_LITE_GPIO_BASEADDR);
+    KYPD_loadKeyTable(&kypd, (u8 *)DEFAULT_KEYTABLE);
+}
+
+void oledIni() {
+    OLED_Begin(&oled, XPAR_PMODOLED_0_AXI_LITE_GPIO_BASEADDR, XPAR_PMODOLED_0_AXI_LITE_SPI_BASEADDR, 0x0, 0x0);
+    OLED_ClearBuffer(&oled);
+    OLED_Update(&oled);
+}
 
 //----Struct for player specific information (dice values and number of dice)----
 
@@ -33,6 +49,10 @@ void display_player (player* p);
 void roll_dice (player* p);
 void action_bid (int* bid);
 void tally_dice (int* bid, player* players, int caller, int action);
+
+
+void kypdIni();
+void oledIni();
 //---------------------------
 
 //----Initialize a player - Iterate through loop to set all players in game----
@@ -73,31 +93,37 @@ void action_bid (int* bid) {
 
         int new_face = 0;
         int new_quantity = 0;
-
+        int key_num = 0;
         xil_printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): \n");
         
-        //Get the first number (quantity)
+        //Get the quanity and face value
         while (1){
-            u8 key;
-            XStatus status = KYPD_getKeyPressed(&myDevice, keystate, &key);
-            if (status == KYPD_SINGLE_KEY && key != 'x'){   //ensure a valid key was pressed
+            u16 keystate;
+            u8 key, last_key = 'x';
+            XStatus status, last_status = KYPD_NO_KEY;
+
+
+            keystate = KYPD_getKeyStates(&kypd);
+            status = KYPD_getKeyPressed(&kypd, keystate, &key);
+
+            if (status == KYPD_SINGLE_KEY && (status != last_status || key != last_key)){   //ensure a valid key was pressed
                 new_quantity = key - '0';   //Convert the character to an integer
-                xil_printf("You entered quantity: %d\n", new_quantity);
-                break;
+                if(key_num == 0){
+                    xil_printf("You entered quantity: %d\n", new_quantity);
+                    key_num++;
+                    last_key = key;
+                }else if(key_num == 1){
+                    xil_printf("You entered face value: %d\n", new_face);
+                    break;
+                }
+            }else if (status == KYPD_MULTI_KEY && status != last_status){
+                xil_printf("Error: Multiple keys pressed\n");
             }
-        }
 
-        //Get the second number (dice face)
-        while (1){
-            u8 key;
-            XStatus status = KYPD_getKeyPressed(&myDevice, keystate, &key);
-            if (status == KYPD_SINGLE_KEY && key != 'x'){
-                new_face = key - '0';   //Convert the character to an integer
-                xil_printf("You entered face value: %d\n", new_face);
-                break;
-            }
-        }
+            last_status = status;
+            usleep(1000);
 
+        }
         if ((new_quantity <= bid[0] && new_face <= bid[1]) || (new_face > 6 || new_face < 1)){                //Check If the new bid is valid (if the new bid is smaller than old bid and if the new face is less than 6 or 1)
 
 
@@ -183,10 +209,15 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
 
 int main ()
 {
-
+    kypdIni();
+    oledIni();
     //Seed the rand so that each run is random
     srand(seed);
     // srand(time(0));
+
+    u16 keystate;
+    XStatus status, last_status = KYPD_NO_KEY;
+    u8 key, last_key = 'x';
 
     //Player initialization
     player players [Num_Player];
@@ -228,11 +259,19 @@ int main ()
 
                 while(1){//start turn loop
                     xil_printf("Player %d's turn: Ready to start turn? Press 1 to start.\r\n", i + 1);
-                    u8 key;
-                    XStatus status = KYPD_getKeyPressed(&myDevice, keystate, &key);
-                    if (status == KYPD_SINGLE_KEY && key == '1'){
+
+                    keystate = KYPD_getKeyStates(&kypd);
+                    status = KYPD_getKeyPressed(&kypd, keystate, &key);
+                    if (status == KYPD_SINGLE_KEY && (status != last_status || key != last_key) && (key == '1')){
+
+                        xil_printf("Key Pressed: %c\r\n", key);
+                        last_key = key;
                         break;
+                    }else if(status == KYPD_MULTI_KEY && status != last_status){
+                        xil_printf("Error: Multiple keys pressed\r\n ");
                     }
+                    last_status = status;
+                    usleep(1000);
                 }
 
                 display_player(&players[i]);
@@ -247,13 +286,20 @@ int main ()
                     {
 
                         xil_printf("Actions : New bid | Spot On | Call Bluff - 1 , 2 ,3 \n");
-                        u8 key;
-                        XStatus status = KYPD_getKeyPressed(&myDevice, keystate, &key);
-                        if (status == KYPD_SINGLE_KEY && (key >= '1' && key <= '3')) {
-                            action = key - '0';
-                            break;
-                        }
 
+                        keystate = KYPD_getKeyStates(&kypd);
+                        status = KYPD_getKeyPressed(&kypd, keystate, &key);
+                        if (status == KYPD_SINGLE_KEY && (status != last_status || key != last_key) && (key >= '1' && key <= '3')) {
+                            action = key - '0';
+                            last_key = key;
+                        }else if(status == KYPD_MULTI_KEY && status != last_status){
+                            xil_printf("Error: Multiple keys pressed\r\n ");
+                            last_status = status;
+                            usleep(1000);
+                            continue;
+                        }
+                        last_status = status;
+                        usleep(1000);
                         switch (action)
                         {
 
