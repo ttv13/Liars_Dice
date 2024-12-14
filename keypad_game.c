@@ -3,9 +3,24 @@
 #include <time.h>
 #include <string.h>
 
+#include "PmodKYPD.h"
+#include "sleep.h"
+#include "xil_cache.h"
+#include "xparameters.h"
+
+
 #define Max_Dice 5
 #define Num_Player 2
 #define seed 24
+
+PmodKYPD kypd;
+#define DEFAULT_KEYTABLE "0FED789C456B123A"
+
+void kypdIni() {
+
+    KYPD_begin(&kypd, XPAR_PMODKYPD_0_AXI_LITE_GPIO_BASEADDR);
+    KYPD_loadKeyTable(&kypd, (u8 *)DEFAULT_KEYTABLE);
+}
 
 //----Struct for player specific information (dice values and number of dice)----
 
@@ -22,6 +37,9 @@ void display_player (player* p);
 void roll_dice (player* p);
 void action_bid (int* bid);
 void tally_dice (int* bid, player* players, int caller, int action);
+
+
+void kypdIni();
 //---------------------------
 
 //----Initialize a player - Iterate through loop to set all players in game----
@@ -39,11 +57,11 @@ void create_players (player* player)  {
 
 void display_player (player* player) {
     
-    printf("Dice num: %d\n  Dice values: ", player->dice_num);       //Print Number of player dice
+    xil_printf("Dice num: %d\n  Dice values: ", player->dice_num);       //Print Number of player dice
     for (int i = 0; i < player->dice_num; i++){
-        printf("%d ", player->dice[i]);                              //Print dice values
+        xil_printf("%d ", player->dice[i]);                              //Print dice values
     }
-    printf("\n");
+    xil_printf("\n");
 
 }
 
@@ -62,21 +80,48 @@ void action_bid (int* bid) {
 
         int new_face = 0;
         int new_quantity = 0;
+        int key_num = 0;
+        xil_printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): \n");
+        
+        //Get the quanity and face value
+        while (1){
+            u16 keystate;
+            u8 key, last_key = 'x';
+            XStatus status, last_status = KYPD_NO_KEY;
 
-        printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): \n");
-        scanf("%d %d", &new_quantity, &new_face);
 
+            keystate = KYPD_getKeyStates(&kypd);
+            status = KYPD_getKeyPressed(&kypd, keystate, &key);
+
+            if (status == KYPD_SINGLE_KEY && (status != last_status || key != last_key)){   //ensure a valid key was pressed
+                new_quantity = key - '0';   //Convert the character to an integer
+                if(key_num == 0){
+                    xil_printf("You entered quantity: %d\n", new_quantity);
+                    key_num++;
+                    last_key = key;
+                }else if(key_num == 1){
+                    xil_printf("You entered face value: %d\n", new_face);
+                    break;
+                }
+            }else if (status == KYPD_MULTI_KEY && status != last_status){
+                xil_printf("Error: Multiple keys pressed\n");
+            }
+
+            last_status = status;
+            usleep(1000);
+
+        }
         if ((new_quantity <= bid[0] && new_face <= bid[1]) || (new_face > 6 || new_face < 1)){                //Check If the new bid is valid (if the new bid is smaller than old bid and if the new face is less than 6 or 1)
 
 
-            printf("last bid was %d %d\n ", bid[0], bid[1]);
-            printf("Invalid bid. Please try again.\n");
+            xil_printf("last bid was %d %d\n ", bid[0], bid[1]);
+            xil_printf("Invalid bid. Please try again.\n");
             continue;
         }
 
         bid[0] = new_quantity;          //Update the bid array
         bid[1] = new_face;
-        printf("\n\n\nNew bid: %d %d\n", bid[0], bid[1]);
+        xil_printf("\n\n\nNew bid: %d %d\n", bid[0], bid[1]);
         break;
     }
 }
@@ -103,7 +148,7 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
 
         if(tally == bid[0]){        //If caller was right
 
-            printf("Player %d was spot on ! Everyone else loses a dice ! \n", caller + 1);
+            xil_printf("Player %d was spot on ! Everyone else loses a dice ! \n", caller + 1);
 
             for(int i = 0; i < Num_Player; i++){            //Iterate through all of the players to discard dice except for caller
 
@@ -111,13 +156,13 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
                     continue;
                 }
                 players[i].dice_num = players[i].dice_num - 1;
-                printf("Player %d is now at %d dice\n ", i + 1, players[i].dice_num);
+                xil_printf("Player %d is now at %d dice\n ", i + 1, players[i].dice_num);
 
             }
         }else {                 //Caller is wrong
-            printf("Player %d was wrong! The bid was not spot on\n ", caller + 1);
+            xil_printf("Player %d was wrong! The bid was not spot on\n ", caller + 1);
             players[caller].dice_num = players[caller].dice_num - 1;            //Discard wrong caller dice
-            printf("Player %d is now at %d dice\n ", caller + 1, players[caller].dice_num);
+            xil_printf("Player %d is now at %d dice\n ", caller + 1, players[caller].dice_num);
 
         }
 
@@ -126,7 +171,7 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
 
         if(tally < bid[0]){        //if caller was right
 
-            printf("Player %d was right ! Everyone else was bluffing !\n ", caller + 1);
+            xil_printf("Player %d was right ! Everyone else was bluffing !\n ", caller + 1);
 
             for (int i = 0; i < Num_Player; i++){           //Iterate through all of the players to discard dice except for caller
                 if (i == caller)
@@ -134,14 +179,14 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
                     continue;
                 }
                 players[i].dice_num = players[i].dice_num - 1;
-                printf("Player %d is now at %d dice \n", i + 1, players[i].dice_num);
+                xil_printf("Player %d is now at %d dice \n", i + 1, players[i].dice_num);
 
 
             }
         } else {        //if caller was wrong
-            printf("Player %d was wrong! The bid was not a bluff! \n", caller + 1);
+            xil_printf("Player %d was wrong! The bid was not a bluff! \n", caller + 1);
             players[caller].dice_num = players[caller].dice_num - 1;            //Discard wrong caller dice
-            printf("Player %d is now at %d dice \n", caller + 1, players[caller].dice_num);
+            xil_printf("Player %d is now at %d dice \n", caller + 1, players[caller].dice_num);
 
         }
 
@@ -151,10 +196,14 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
 
 int main ()
 {
-
+    kypdIni();
     //Seed the rand so that each run is random
     srand(seed);
     // srand(time(0));
+
+    u16 keystate;
+    XStatus status, last_status = KYPD_NO_KEY;
+    u8 key, last_key = 'x';
 
     //Player initialization
     player players [Num_Player];
@@ -172,7 +221,7 @@ int main ()
     
         for(int i = 0; i < Num_Player; i++){
             if(players[i].dice_num == 0){
-                printf("player %d has ran out of dice ! They lose! \n", i+1);
+                xil_printf("player %d has ran out of dice ! They lose! \n", i+1);
                 end_game_flag = 1;
             }
         }
@@ -182,7 +231,7 @@ int main ()
         }
 
 
-        printf("Round: %d\n", round);
+        xil_printf("Round: %d\n", round);
         for (int i = 0; i < Num_Player; i++){
             roll_dice(&players[i]);               //Roll every player's dice
         }
@@ -195,12 +244,20 @@ int main ()
             for (int i = 0; i < Num_Player; i++){           //Iterate through players
 
                 while(1){//start turn loop
-                    printf("Player %d's turn: \n", i + 1);
-                    printf("ready to start turn ? : press one to start \n");
-                    scanf("%d", &start);
-                    if (start == 1){
+                    xil_printf("Player %d's turn: Ready to start turn? Press 1 to start.\r\n", i + 1);
+
+                    keystate = KYPD_getKeyStates(&kypd);
+                    status = KYPD_getKeyPressed(&kypd, keystate, &key);
+                    if (status == KYPD_SINGLE_KEY && (status != last_status || key != last_key) && (key == '1')){
+
+                        xil_printf("Key Pressed: %c\r\n", key);
+                        last_key = key;
                         break;
+                    }else if(status == KYPD_MULTI_KEY && status != last_status){
+                        xil_printf("Error: Multiple keys pressed\r\n ");
                     }
+                    last_status = status;
+                    usleep(1000);
                 }
 
                 display_player(&players[i]);
@@ -214,9 +271,21 @@ int main ()
                     while (1)
                     {
 
-                        printf("Actions : New bid | Spot On | Call Bluff - 1 , 2 ,3 \n");
-                        scanf("%d", &action);
+                        xil_printf("Actions : New bid | Spot On | Call Bluff - 1 , 2 ,3 \n");
 
+                        keystate = KYPD_getKeyStates(&kypd);
+                        status = KYPD_getKeyPressed(&kypd, keystate, &key);
+                        if (status == KYPD_SINGLE_KEY && (status != last_status || key != last_key) && (key >= '1' && key <= '3')) {
+                            action = key - '0';
+                            last_key = key;
+                        }else if(status == KYPD_MULTI_KEY && status != last_status){
+                            xil_printf("Error: Multiple keys pressed\r\n ");
+                            last_status = status;
+                            usleep(1000);
+                            continue;
+                        }
+                        last_status = status;
+                        usleep(1000);
                         switch (action)
                         {
 
@@ -234,7 +303,7 @@ int main ()
                             end_round_flag = 1;
                             break;
                         default:
-                            printf("Invalid action. Please try again.\n");
+                            xil_printf("Invalid action. Please try again.\n");
                             continue;
                         }
 
