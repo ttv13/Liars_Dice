@@ -6,7 +6,7 @@
 #include "PmodKYPD.h"
 #include "sleep.h"
 #include "xparameters.h"
-
+#include "xtime_l.h"
 
 #define Max_Dice 5
 #define Num_Player 2
@@ -14,7 +14,7 @@
 
 PmodKYPD kypd;
 #define DEFAULT_KEYTABLE "0FED789C456B123A"
-#define u64 DEBOUNCE_TIME = 300000;
+#define u64 Debounce_Time = 300000;
 
 
 void kypdIni() {
@@ -202,9 +202,7 @@ int main ()
     srand(seed);
     // srand(time(0));
 
-    u16 keystate;
-    XStatus status, last_status = KYPD_NO_KEY;
-    u8 key, last_key = 'x';
+
 
     //Player initialization
     player players [Num_Player];
@@ -218,6 +216,13 @@ int main ()
     int end_game_flag = 0;
     int end_round_flag = 0;
     int start;
+
+    u16 keystate;
+    XStatus status, last_status = KYPD_NO_KEY;
+    u8 key, last_key = 'x';
+    XTime start_time, end_time;
+    XTime last_time = 0;
+
     while (1){          //Preround Loop
     
         for(int i = 0; i < Num_Player; i++){
