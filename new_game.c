@@ -22,6 +22,9 @@ PmodKYPD kypd;
 XTime last_time = 0;
 char last_key = 0;
 
+
+
+
 void kypdIni() {
 
     KYPD_begin(&kypd, XPAR_PMODKYPD_0_AXI_LITE_GPIO_BASEADDR);
@@ -38,6 +41,15 @@ typedef struct player
 
 }player;
 
+
+//----Function Prototypes----
+void create_players (player* p);
+void display_player (player* p);
+void roll_dice (player* p);
+void action_bid (int* bid);
+void tally_dice (int* bid, player* players, int caller, int action);
+void kypdIni();
+char kypd_press();
 
 //----Initialize a player - Iterate through loop to set all players in game----
 
@@ -93,16 +105,21 @@ void action_bid (int* bid) {
                 last_key = bid_key;
                 last_time = bid_time;
 
-
+                xil_printf("key num is %d \r\n", key_num);
 
                 if(key_num == 0){
+                    xil_printf("You have entered new quantity %c\r\n ", bid_key);
                     new_quantity = bid_key - '0';
                     key_num++;
+                    xil_printf("new quanity value is %d \r\n ", new_quantity);
                     continue;
                 } else if(key_num == 1){
+                    xil_printf("You have entered new face %c\r\n ", bid_key);
+
                     new_face = bid_key - '0';
                     key_num = 0;
-                    continue;
+                    xil_printf("new face value is %d \r\n ", new_face);
+
                 }
 
                 if ((new_quantity <= bid[0] && new_face <= bid[1]) || (new_face > 6 || new_face < 1))
@@ -310,16 +327,16 @@ int main ()
                                 switch (action)
                                 {
 
-                                case 1:
+                                case '1':
                                     action_bid(bid);
                                     break;
 
-                                case 2:
+                                case '2':
                                     tally_dice(bid, players, i, 0);
                                     end_round_flag = 1;
                                     break;
 
-                                case 3:
+                                case '3':
                                     tally_dice(bid, players, i, 1);
                                     end_round_flag = 1;
                                     break;
