@@ -92,7 +92,9 @@ void display_player (player* player) {
     for (int i = 0; i < player->dice_num; i++){
         xil_printf("%d ", player->dice[i]);                              //Print dice values
 
-        sprintf(dice_buffer, "%d ", player->dice[i]);
+        char temp_buffer[2]
+        sprintf(temp_buffer, "%d ", player->dice[i]);
+        strcat(dice_buffer,temp_buffer);
         usleep(1000);
 
     }
@@ -100,7 +102,7 @@ void display_player (player* player) {
     OLED_SetCursor(&oled, 0, 2);
     OLED_PutString(&oled, dice_buffer);
     OLED_Update(&oled);
-    sleep(5);
+    sleep(3);
     xil_printf("\r\n");
 
 }
@@ -122,7 +124,7 @@ void action_bid (int* bid) {
     OLED_SetCursor(&oled, 0, 0);
     OLED_PutString(&oled, "Enter bid : ");
     OLED_SetCursor(&oled,0,2);
-    OLED_PutString(&oled, "(num , face val");
+    OLED_PutString(&oled, "num , face val");
     OLED_Update(&oled);
     usleep(1000);
     int key_num = 0;
@@ -198,7 +200,7 @@ void action_bid (int* bid) {
                     sprintf(bid_buffer, "New bid : %d %d", bid[0], bid[1]);
                     OLED_PutString(&oled, bid_buffer);
                     OLED_Update(&oled);
-                    sleep(5);
+                    sleep(3);
                     break;
                 }
             }
@@ -398,7 +400,7 @@ int main ()
                 OLED_SetCursor(&oled, 0, 1);
                 OLED_PutString(&oled, "No more dice");
                 OLED_Update(&oled);
-                sleep(5);
+                sleep(3);
                 end_game_flag = 1;
             }
         }
