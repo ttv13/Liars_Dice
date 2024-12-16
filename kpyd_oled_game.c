@@ -89,10 +89,10 @@ void display_player (player* player) {
     usleep(1000);
 
     char dice_buffer[16];
+    char temp_buffer[2]
     for (int i = 0; i < player->dice_num; i++){
         xil_printf("%d ", player->dice[i]);                              //Print dice values
 
-        char temp_buffer[2]
         sprintf(temp_buffer, "%d ", player->dice[i]);
         strcat(dice_buffer,temp_buffer);
         usleep(1000);
