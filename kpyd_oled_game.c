@@ -89,7 +89,7 @@ void display_player (player* player) {
     usleep(1000);
 
     char dice_buffer[16];
-    char temp_buffer[2]
+    char temp_buffer[2];
     for (int i = 0; i < player->dice_num; i++){
         xil_printf("%d ", player->dice[i]);                              //Print dice values
 
@@ -244,7 +244,7 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
             OLED_SetCursor(&oled, 0, 1);
             OLED_PutString(&oled, "is right ! ");
             OLED_Update(&oled);
-            sleep(5);
+            sleep(3);
             char dice_buffer[16];
             for(int i = 0; i < Num_Player; i++){            //Iterate through all of the players to discard dice except for caller
 
@@ -260,7 +260,7 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
                 OLED_SetCursor(&oled,0,3);
                 OLED_PutString(&oled,dice_buffer);
                 OLED_Update(&oled);
-                sleep(5);
+                sleep(3);
 
             }
         }else {                 //Caller is wrong
@@ -284,7 +284,7 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
             OLED_SetCursor(&oled,0,3);
             OLED_PutString(&oled,dice_buffer);
             OLED_Update(&oled);
-            sleep(5);
+            sleep(3);
 
         }
 
@@ -303,7 +303,7 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
             OLED_SetCursor(&oled, 0, 1);
             OLED_PutString(&oled,caller_bluff_buffer);
             OLED_Update(&oled);
-            sleep(5);
+            sleep(3);
 
             char dice_buffer[16];
             for (int i = 0; i < Num_Player; i++){           //Iterate through all of the players to discard dice except for caller
@@ -321,7 +321,7 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
                 OLED_SetCursor(&oled, 0, 3);
                 OLED_PutString(&oled,dice_buffer);
                 OLED_Update(&oled);
-                sleep(5);
+                sleep(3);
 
             }
         } else {        //if caller was wrong
@@ -345,7 +345,7 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
             OLED_SetCursor(&oled, 0, 3);
             OLED_PutString(&oled,dice_buffer);
             OLED_Update(&oled);
-            sleep(5);
+            sleep(3);
 
         }
 
