@@ -78,32 +78,29 @@ void display_player (player* player) {
     xil_printf("Dice num: %d\r\n  Dice values: ", player->dice_num);       //Print Number of player dice
 
 
-    char display_buffer[2];
+    char display_buffer[16];
     OLED_ClearBuffer(&oled);
     OLED_SetCursor(&oled, 0, 0);
-    OLED_PutString(&oled, "Number of Dice: ");
-    sprintf(display_buffer, "%d", player->dice_num);
-    OLED_SetCursor(&oled, 0, 2);
+    sprintf(display_buffer, "Dice num %d", player->dice_num);
     OLED_PutString(&oled, display_buffer);
-    OLED_SetCursor(&oled, 2, 0);
+    OLED_SetCursor(&oled, 1, 0);
     OLED_PutString(&oled, "Dice Values: ");
     // OLED_Update(&oled);
     usleep(1000);
 
-    char dice_buffer[24];
+    char dice_buffer[16];
     for (int i = 0; i < player->dice_num; i++){
         xil_printf("%d ", player->dice[i]);                              //Print dice values
 
-        sprintf(dice_buffer, "%d", player->dice[i]);
-        sprintf(dice_buffer, " ");
-        // OLED_Update(&oled);
+        sprintf(dice_buffer, "%d ", player->dice[i]);
         usleep(1000);
 
     }
 
-    OLED_SetCursor(&oled, 2, 2);
+    OLED_SetCursor(&oled, 2, 0);
     OLED_PutString(&oled, dice_buffer);
     OLED_Update(&oled);
+    sleep(2);
     xil_printf("\r\n");
 
 }
@@ -123,7 +120,9 @@ void action_bid (int* bid) {
     // xil_printf("Enter bid quantity and dice face (e.g., 3 1 for 3 ones): \r\n");
     OLED_ClearBuffer(&oled);
     OLED_SetCursor(&oled, 0, 0);
-    OLED_PutString(&oled, "Enter bid quantity and dice face (e.g., 3 1 for 3 ones): ");
+    OLED_PutString(&oled, "Enter bid : ");
+    OLED_SetCursor(&oled,2,0);
+    OLED_PutString(&oled, "(num , face val");
     OLED_Update(&oled);
     usleep(1000);
     int key_num = 0;
@@ -151,12 +150,10 @@ void action_bid (int* bid) {
                     new_quantity = bid_key - '0';
                     key_num++;
                     xil_printf("new quanity value is %d \r\n ", new_quantity);
-                    char quantity_buffer[2];
+                    char quantity_buffer[16];
                     OLED_ClearBuffer(&oled);
                     OLED_SetCursor(&oled, 0, 0);
-                    OLED_PutString(&oled, "You have entered new quantity ");
-                    sprintf(quantity_buffer, "%c", bid_key);
-                    OLED_SetCursor(&oled, 0, 2);
+                    sprintf(quantity_buffer, "Entered %c num", bid_key);
                     OLED_PutString(&oled, quantity_buffer);
                     OLED_Update(&oled);
                     usleep(1000);
@@ -167,11 +164,9 @@ void action_bid (int* bid) {
                     new_face = bid_key - '0';
                     key_num = 0;
                     xil_printf("new face value is %d \r\n ", new_face);
-                    char face_buffer[2];
-                    OLED_SetCursor(&oled, 2, 0);
-                    OLED_PutString(&oled, "You have entered new face ");
-                    sprintf(face_buffer, "%c", bid_key);
-                    OLED_SetCursor(&oled, 2, 2);
+                    char face_buffer[16];
+                    OLED_SetCursor(&oled, 1, 0);
+                    sprintf(face_buffer, "Entered %c Face", bid_key);
                     OLED_PutString(&oled, face_buffer);
                     OLED_Update(&oled);
                     usleep(1000);
@@ -182,15 +177,14 @@ void action_bid (int* bid) {
 
                     xil_printf("Invalid bid. Please try again. last bid was %d %d \r\n ", bid[0], bid[1]);
 
-                    char error_buffer[3];
-                    OLED_SetCursor(&oled, 4, 0);
-                    OLED_PutString(&oled, "Invalid bid. Please try again. last bid was ");
-                    sprintf(error_buffer, "%d", bid[0]);
-                    sprintf(error_buffer, " %d", bid[1]);
-                    OLED_SetCursor(&oled, 4, 2);
+                    char error_buffer[16];
+                    OLED_SetCursor(&oled, 2, 0);
+                    OLED_PutString(&oled, "Invalid bid");
+                    sprintf(error_buffer, "Last bid %d %d ", bid[0] ,bid[1]);
+                    OLED_SetCursor(&oled, 3, 0);
                     OLED_PutString(&oled, error_buffer);
                     OLED_Update(&oled);
-                    usleep(1000);
+                    sleep(2);
                     new_quantity = 0;
                     new_face = 0;
                     continue;
@@ -199,15 +193,12 @@ void action_bid (int* bid) {
                     bid[1] = new_face;
                     xil_printf("\r\n\r\n\r\nNew bid: %d %d \r\n", bid[0], bid[1]);
 
-                    char bid_buffer[3];
-                    OLED_SetCursor(&oled, 4, 0);
-                    OLED_PutString(&oled, "New bid is ");
-                    sprintf(bid_buffer, "%d", bid[0]);
-                    sprintf(bid_buffer, " %d", bid[1]);
-                    OLED_SetCursor(&oled, 4, 2);
+                    char bid_buffer[16];
+                    OLED_SetCursor(&oled, 2, 0);
+                    sprintf(bid_buffer, "New bid : %d %d", bid[0], bid[1]);
                     OLED_PutString(&oled, bid_buffer);
                     OLED_Update(&oled);
-                    usleep(1000);
+                    sleep(2);
                     break;
                 }
             }
@@ -243,18 +234,16 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
         if(tally == bid[0]){        //If caller was right
 
             xil_printf("Player %d was spot on ! Everyone else loses a dice ! \r\n", caller + 1);
-            char caller_spot_buffer[2];
+            char caller_spot_buffer[16];
             OLED_ClearBuffer(&oled);
             OLED_SetCursor(&oled, 0, 0);
-            OLED_PutString(&oled, "Player ");
-            sprintf(caller_spot_buffer, "%d ", caller + 1);
-            OLED_SetCursor(&oled, 0, 2);
+            sprintf(caller_spot_buffer, "player %d", caller + 1);
             OLED_PutString(&oled, caller_spot_buffer);
-            OLED_SetCursor(&oled, 0, 4);
-            OLED_PutString(&oled, "  was spot on ! Everyone else loses a dice !");
+            OLED_SetCursor(&oled, 1, 0);
+            OLED_PutString(&oled, "is right ! ");
             OLED_Update(&oled);
-            usleep(1000);
-            char dice_buffer[32];
+            sleep(2);
+            char dice_buffer[16];
             for(int i = 0; i < Num_Player; i++){            //Iterate through all of the players to discard dice except for caller
 
                 if(i == caller){
@@ -262,9 +251,12 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
                 }
                 players[i].dice_num = players[i].dice_num - 1;
                 xil_printf("Player %d is now at %d dice \r\n ", i + 1, players[i].dice_num);
-                sprintf(dice_buffer, "Player %d is now at %d dice \r\n ", i + 1, players[i].dice_num);
-                OLED_SetCursor(&oled, 4, 0);
+                sprintf(dice_buffer, "Player %d dicenum", i + 1);
+                OLED_SetCursor(&oled, 2, 0);
                 OLED_PutString(&oled, dice_buffer);
+                sprintf(dice_buffer,"At %d dice", players[i].dice_num);
+                OLED_SetCursor(&oled,3,0);
+                OLED_PutString(&oled,dice_buffer);
                 OLED_Update(&oled);
                 sleep(2);
 
@@ -275,19 +267,20 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
             xil_printf("Player %d is now at %d dice \r\n ", caller + 1, players[caller].dice_num);
 
             OLED_ClearBuffer(&oled);
-            char caller_spot_buffer[2];
+            char caller_spot_buffer[16];
             OLED_ClearBuffer(&oled);
             OLED_SetCursor(&oled, 0, 0);
-            OLED_PutString(&oled, "Player ");
-            sprintf(caller_spot_buffer, "%d ", caller + 1);
-            OLED_SetCursor(&oled, 0, 2);
+            sprintf(caller_spot_buffer, "player %d", caller + 1);
             OLED_PutString(&oled, caller_spot_buffer);
-            OLED_SetCursor(&oled, 0, 4);
-            OLED_PutString(&oled, " was wrong! The bid was not spot on");
-            char dice_buffer[32];
-            sprintf(dice_buffer, "Player %d is now at %d dice \r\n ", caller + 1, players[caller].dice_num);
-            OLED_SetCursor(&oled, 4, 0);
+            OLED_SetCursor(&oled, 1, 0);
+            OLED_PutString(&oled, "was wrong");
+            char dice_buffer[16];
+            sprintf(dice_buffer, "Player %d dicenum", caller + 1);
+            OLED_SetCursor(&oled, 2, 0);
             OLED_PutString(&oled, dice_buffer);
+            sprintf(dice_buffer, "At %d dice",players[caller].dice_num);
+            OLED_SetCursor(&oled,3,0);
+            OLED_PutString(&oled,dice_buffer);
             OLED_Update(&oled);
             sleep(2);
 
@@ -299,19 +292,18 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
         if(tally < bid[0]){        //if caller was right
 
             xil_printf("Player %d was right ! Everyone else was bluffing ! \r\n ", caller + 1);
-            char caller_bluff_buffer[2];
+            char caller_bluff_buffer[16];
             OLED_ClearBuffer(&oled);
             OLED_SetCursor(&oled, 0, 0);
-            OLED_PutString(&oled, "Player ");
-            sprintf(caller_bluff_buffer, "%d ", caller + 1);
-            OLED_SetCursor(&oled, 0, 2);
+            sprintf(caller_bluff_buffer, "player %d ", caller + 1);
             OLED_PutString(&oled, caller_bluff_buffer);
-            OLED_SetCursor(&oled, 0, 4);
-            OLED_PutString(&oled, "  was right ! Everyone else was bluffing !");
+            sprintf(caller_bluff_buffer,"was right !");
+            OLED_SetCursor(&oled, 1, 0);
+            OLED_PutString(&oled,caller_bluff_buffer);
             OLED_Update(&oled);
-            usleep(1000);
+            sleep(2);
 
-            char dice_buffer[32];
+            char dice_buffer[16];
             for (int i = 0; i < Num_Player; i++){           //Iterate through all of the players to discard dice except for caller
                 if (i == caller)
                 {
@@ -320,9 +312,12 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
                 players[i].dice_num = players[i].dice_num - 1;
                 xil_printf("Player %d is now at %d dice \r\n", i + 1, players[i].dice_num);
 
-                sprintf(dice_buffer, "Player %d is now at %d dice \r\n ", i + 1, players[i].dice_num);
-                OLED_SetCursor(&oled, 4, 0);
+                sprintf(dice_buffer, "Player %d dicenum", i + 1);
+                OLED_SetCursor(&oled, 2, 0);
                 OLED_PutString(&oled, dice_buffer);
+                sprintf(dice_buffer,"At %d dice", players[i].dice_num);
+                OLED_SetCursor(&oled,3,0);
+                OLED_PutString(&oled,dice_buffer);
                 OLED_Update(&oled);
                 sleep(2);
 
@@ -333,19 +328,20 @@ void tally_dice (int* bid, player* players, int caller, int action) {           
             xil_printf("Player %d is now at %d dice \r\n", caller + 1, players[caller].dice_num);
 
             OLED_ClearBuffer(&oled);
-            char caller_bluff_buffer[2];
+            char caller_bluff_buffer[16];
             OLED_ClearBuffer(&oled);
             OLED_SetCursor(&oled, 0, 0);
-            OLED_PutString(&oled, "Player ");
-            sprintf(caller_bluff_buffer, "%d ", caller + 1);
-            OLED_SetCursor(&oled, 0, 2);
+            sprintf(caller_bluff_buffer, "player %d", caller + 1);
             OLED_PutString(&oled, caller_bluff_buffer);
-            OLED_SetCursor(&oled, 0, 4);
-            OLED_PutString(&oled, " was wrong! The bid was not a bluff! ");
-            char dice_buffer[32];
-            sprintf(dice_buffer, "Player %d is now at %d dice \r\n ", caller + 1, players[caller].dice_num);
-            OLED_SetCursor(&oled, 4, 0);
+            OLED_SetCursor(&oled, 1, 0);
+            OLED_PutString(&oled, "was wrong");
+            char dice_buffer[16];
+            sprintf(dice_buffer, "Player %d dicenum", caller + 1);
+            OLED_SetCursor(&oled, 2, 0);
             OLED_PutString(&oled, dice_buffer);
+            sprintf(dice_buffer, "At %d dice",players[caller].dice_num);
+            OLED_SetCursor(&oled,3,0);
+            OLED_PutString(&oled,dice_buffer);
             OLED_Update(&oled);
             sleep(2);
 
@@ -394,17 +390,15 @@ int main ()
         for(int i = 0; i < Num_Player; i++){
             if(players[i].dice_num == 0){
                 // xil_printf("player %d has ran out of dice ! They lose! \r\n", i+1);
-                char end_buffer[2];
+                char end_buffer[16];
                 OLED_ClearBuffer(&oled);
                 OLED_SetCursor(&oled, 0, 0);
-                OLED_PutString(&oled, "Player ");
-                sprintf(end_buffer, "%d", i + 1);
-                OLED_SetCursor(&oled, 0, 2);
+                sprintf(end_buffer, "Player %d Lost", i + 1);
                 OLED_PutString(&oled, end_buffer);
-                OLED_SetCursor(&oled, 2, 0);
-                OLED_PutString(&oled, "Has ran out of dice! They lose!");
+                OLED_SetCursor(&oled, 1, 0);
+                OLED_PutString(&oled, "No more dice");
                 OLED_Update(&oled);
-                usleep(1000);
+                sleep(2);
                 end_game_flag = 1;
             }
         }
@@ -413,16 +407,14 @@ int main ()
             break;
         }
 
-        char round_buffer[24];
+        char round_buffer[16];
         // xil_printf("Round: %d \r\n", round);
         OLED_ClearBuffer(&oled);
         OLED_SetCursor(&oled, 0, 0);
-        OLED_PutString(&oled, "Round: ");
-        sprintf(round_buffer, "%d", round);
-        OLED_SetCursor(&oled, 0, 2);
+        sprintf(round_buffer, "Round: %d", round);
         OLED_PutString(&oled, round_buffer);
         OLED_Update(&oled);
-        usleep(1000);
+        sleep(2);
 
         for (int i = 0; i < Num_Player; i++){
             roll_dice(&players[i]);               //Roll every player's dice
@@ -436,15 +428,13 @@ int main ()
             for (int i = 0; i < Num_Player; i++){           //Iterate through players
 
                 // xil_printf("Player %d's turn: Press one to start turn \r\n", i + 1);
-                char start_buffer[2];
+                char start_buffer[16];
                 OLED_ClearBuffer(&oled);
                 OLED_SetCursor(&oled, 0, 0);
-                OLED_PutString(&oled, "Player ");
-                sprintf(start_buffer, "%d", i+1);
-                OLED_SetCursor(&oled, 0, 2);
+                sprintf(start_buffer, "Player %d Press 1", i+1);
                 OLED_PutString(&oled, start_buffer);
                 OLED_SetCursor(&oled, 2, 0);
-                OLED_PutString(&oled, "Press 1 to start Turn: ");
+                OLED_PutString(&oled, "to start Turn");
                 OLED_Update(&oled);
                 usleep(1000);
 
@@ -466,7 +456,7 @@ int main ()
                                 OLED_SetCursor(&oled, 0, 0);
                                 OLED_PutString(&oled, "Starting turn : ");
                                 OLED_Update(&oled);
-                                usleep(1000);
+                                sleep(1);
 
                                 break;
                             }else {
@@ -475,7 +465,7 @@ int main ()
                                 OLED_SetCursor(&oled, 0, 0);
                                 OLED_PutString(&oled, "Not Starting turn : ");
                                 OLED_Update(&oled);
-                                usleep(1000);
+                                sleep(1);
                             }
                         }
                     }else {
@@ -494,14 +484,13 @@ int main ()
 
                     // xil_printf("Actions : New bid | Spot On | Call Bluff - 1 , 2 ,3 \r\n");
                     OLED_ClearBuffer(&oled);
-                    char action_buffer[3];
+                    char action_buffer[16];
                     OLED_SetCursor(&oled, 0, 0);
-                    OLED_PutString(&oled, "Actions : New bid | Spot On | Call Bluff - 1 , 2 ,3 ");
+                    OLED_PutString(&oled, "bid-1|Spot on-2");
+                    OLED_SetCursor(&oled, 1, 0);
+                    OLED_PutString(&oled, " Bluff-3 ");
+                    sprintf(action_buffer, "Last bid %d %d", bid[0],bid[1]);
                     OLED_SetCursor(&oled, 2, 0);
-                    OLED_PutString(&oled, "Last bid is ");
-                    sprintf(action_buffer, "%d", bid[0]);
-                    sprintf(action_buffer, " %d", bid[1]);
-                    OLED_SetCursor(&oled, 2, 2);
                     OLED_PutString(&oled, action_buffer);
                     OLED_Update(&oled);
                     // Action Selection
@@ -541,7 +530,7 @@ int main ()
                                     OLED_SetCursor(&oled, 0, 0);
                                     OLED_PutString(&oled, "Invalid action. Please try again.");
                                     OLED_Update(&oled);
-                                    usleep(1000);
+                                    sleep(2);
                                     continue;
                                 }
 
